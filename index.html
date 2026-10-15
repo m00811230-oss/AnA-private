@@ -3,764 +3,400 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnA Private - Intimate Chat</title>
+    <title>AnA Private - Pookie Chat 🎀</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- PubNub SDK -->
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
+
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            400: '#fb7185',
-                            500: '#f43f5e',
-                            600: '#e11d48',
-                            700: '#be123c',
-                        }
-                    },
                     fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        pookie: {
+                            pink: '#FFB7B2',
+                            lightpink: '#FFDAC1',
+                            softpurple: '#E2F0CB',
+                            bg: '#FFF5F5',
+                            card: '#FFFFFF',
+                            pumpchikin: '#FF9AA2',
+                            peanut: '#B5EAD7',
+                            accent: '#FF6B81'
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Custom scrollbar for chat body */
-        ::-webkit-scrollbar {
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF0F5;
+            background-image: radial-gradient(#FFB7B2 0.75px, transparent 0.75px), radial-gradient(#FFB7B2 0.75px, #FFF0F5 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+        .chat-scroll::-webkit-scrollbar {
             width: 6px;
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background-color: #FFB7B2;
+            border-radius: 20px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.4);
-            border-radius: 9999px;
+        .floating-heart {
+            position: absolute;
+            animation: floatUp 4s infinite linear;
+            opacity: 0.6;
+            pointer-events: none;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(107, 114, 128, 0.6);
-        }
-        /* Custom wallpaper styles */
-        .bg-pattern-dots {
-            background-image: radial-gradient(rgba(156, 163, 175, 0.2) 1px, transparent 1px);
-            background-size: 16px 16px;
-        }
-        .bg-pattern-warm {
-            background: linear-gradient(135deg, #fff5f5 0%, #fed7aa 100%);
-        }
-        .dark .bg-pattern-warm {
-            background: linear-gradient(135deg, #1f1924 0%, #2e1065 100%);
-        }
-        .bg-pattern-pastel {
-            background: linear-gradient(135deg, #e0f2fe 0%, #fbcfe8 100%);
-        }
-        .dark .bg-pattern-pastel {
-            background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
-        }
-        /* Pookie floating heart animation */
-        @keyframes floatHeart {
-            0% { transform: translateY(0px) rotate(0deg) scale(0.9); opacity: 0.8; }
-            50% { transform: translateY(-12px) rotate(5deg) scale(1.1); opacity: 1; }
-            100% { transform: translateY(0px) rotate(0deg) scale(0.9); opacity: 0.8; }
-        }
-        .pookie-float {
-            animation: floatHeart 3s ease-in-out infinite;
-        }
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.3); }
-            50% { box-shadow: 0 0 25px rgba(244, 63, 94, 0.6); }
-        }
-        .pookie-glow {
-            animation: pulseGlow 2.5s infinite;
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8); opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans h-screen flex flex-col justify-between transition-colors duration-200 overflow-hidden select-none">
+<body class="h-screen flex items-center justify-center p-2 sm:p-4 overflow-hidden">
 
-    <!-- Top Navigation Header -->
-    <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between z-10">
-        <div class="flex items-center space-x-3">
-            <div class="relative">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-rose-400 to-pink-500 flex items-center justify-center text-white font-bold shadow-md shadow-rose-500/20 pookie-float" id="headerAvatar">
-                    <span class="text-lg">🧸</span>
+    <!-- Floating Background Hearts -->
+    <div id="heartContainer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-md h-[95vh] bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-pink-200 flex flex-col overflow-hidden relative">
+        
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-pink-300 via-pink-200 to-purple-200 p-4 border-b-2 border-pink-200 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl shadow-inner border border-pink-300" id="headerAvatar">
+                    💖
                 </div>
-                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
-            </div>
-            <div>
-                <h1 class="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2" id="chatTitle">
-                    AnA Private <span class="text-xs font-normal px-2 py-0.5 bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 rounded-full">✨ Cute & Cozy</span>
-                </h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1" id="statusText">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 100% Safe & Private Space 💖
-                </p>
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <!-- Search Toggle -->
-            <button id="searchBtn" title="Search Messages" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-            
-            <!-- Customization Options -->
-            <button id="wallpaperBtn" title="Change Wallpaper" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
-                <i class="fa-solid fa-palette"></i>
-            </button>
-
-            <!-- User Switcher -->
-            <button id="switchUserBtn" title="Switch Active User" class="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                <i class="fa-solid fa-user-gear"></i>
-                <span id="currentUserLabel">User: Arian</span>
-            </button>
-
-            <!-- Dark Mode Toggle -->
-            <button id="themeToggleBtn" title="Toggle Theme" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
-                <i class="fa-solid fa-moon dark:hidden"></i>
-                <i class="fa-solid fa-sun hidden dark:inline"></i>
-            </button>
-
-            <!-- Firebase Setup Instructions -->
-            <button id="setupGuideBtn" title="Setup Guide" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors relative">
-                <i class="fa-solid fa-gear"></i>
-                <span id="firestoreStatusBadge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border border-white dark:border-gray-800" title="Permission or Setup Status"></span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Permission Warning Notification Banner -->
-    <div id="permissionWarningBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between z-10">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-            <span><b>Firestore Permission Issue:</b> Database rules are blocking writes. Saved locally for now.</span>
-        </div>
-        <button onclick="document.getElementById('setupModal').classList.remove('hidden')" class="underline font-bold hover:text-amber-600 dark:hover:text-amber-100">Fix Rules Guide</button>
-    </div>
-
-    <!-- Search Overlay Bar -->
-    <div id="searchBar" class="hidden bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between transition-all">
-        <div class="relative w-full max-w-md mx-auto flex items-center">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 text-gray-400"></i>
-            <input type="text" id="searchInput" placeholder="Search in chat..." class="w-full pl-9 pr-8 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg text-sm border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-500">
-            <button id="closeSearchBtn" class="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Chat Window Area -->
-    <main id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-pattern-dots relative">
-        <div id="loadingState" class="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
-            <i class="fa-solid fa-heart-pulse text-3xl animate-bounce text-rose-500"></i>
-            <p class="text-xs">Loading secure messages...</p>
-        </div>
-    </main>
-
-    <!-- Input Footer Bar -->
-    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 z-10">
-        <!-- Attachment / Image Preview Bar -->
-        <div id="attachmentPreview" class="hidden mb-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between border border-gray-200 dark:border-gray-600">
-            <div class="flex items-center space-x-2 overflow-hidden">
-                <div id="fileTypeIcon" class="p-2 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 rounded text-sm">
-                    <i class="fa-solid fa-paperclip"></i>
-                </div>
-                <div class="truncate">
-                    <p id="fileName" class="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">file.jpg</p>
-                    <p id="fileSize" class="text-[10px] text-gray-400">2.4 MB</p>
+                <div>
+                    <h1 class="font-fredoka text-xl text-pink-700 font-bold tracking-wide flex items-center gap-1">
+                        AnA Private <span class="text-xs bg-white/80 text-pink-600 px-2 py-0.5 rounded-full border border-pink-200">pookie</span>
+                    </h1>
+                    <p class="text-xs text-pink-600 font-medium" id="statusText">Not Connected</p>
                 </div>
             </div>
-            <button id="cancelAttachment" class="p-1 text-gray-400 hover:text-rose-500">
+            <button onclick="toggleSettings()" class="text-pink-500 hover:text-pink-700 transition-transform active:scale-95 p-2">
+                <i class="fa-solid fa-gear text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Connection Modal / Settings -->
+        <div id="connectionPanel" class="absolute inset-0 bg-white/95 backdrop-blur-md z-30 flex flex-col justify-center p-6 transition-all duration-300">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-2 animate-bounce">🎀</div>
+                <h2 class="font-fredoka text-2xl text-pink-600 font-bold">Welcome Pookie!</h2>
+                <p class="text-xs text-gray-500 mt-1">Connect to your secret love room 💕</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-pink-600 mb-1 uppercase tracking-wider">Who are you?</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="selectPersona('pumpchikin')" id="btnPumpchikin" class="p-3 border-2 border-pink-200 rounded-2xl flex items-center justify-center gap-2 font-bold text-gray-700 hover:border-pink-400 transition-all">
+                            <span>pumpchikin</span> 🎃
+                        </button>
+                        <button type="button" onclick="selectPersona('peanut')" id="btnPeanut" class="p-3 border-2 border-pink-200 rounded-2xl flex items-center justify-center gap-2 font-bold text-gray-700 hover:border-pink-400 transition-all">
+                            <span>peanut</span> 🥜
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-pink-600 mb-1 uppercase tracking-wider">Secret Room Code</label>
+                    <input type="password" id="roomCodeInput" value="ana2026" placeholder="Enter secret code..." class="w-full px-4 py-3 border-2 border-pink-200 rounded-2xl text-center font-bold text-pink-600 focus:outline-none focus:border-pink-400 bg-pink-50/50">
+                </div>
+
+                <button onclick="connectRoom()" class="w-full bg-gradient-to-r from-pink-400 to-rose-400 text-white font-fredoka font-bold py-3.5 rounded-2xl shadow-lg hover:opacity-95 transition-all transform active:scale-95 text-lg">
+                    Connect Room 💕
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto chat-scroll space-y-3 bg-gradient-to-b from-pink-50/30 to-white/50">
+            <div class="text-center my-4">
+                <span class="bg-pink-100/80 text-pink-500 text-xs px-3 py-1 rounded-full border border-pink-200 font-medium">
+                    🔒 Messages are end-to-end secret
+                </span>
+            </div>
+        </div>
+
+        <!-- Attachment Preview Bar -->
+        <div id="previewContainer" class="hidden p-2 bg-pink-50 border-t border-pink-200 flex items-center justify-between">
+            <div id="previewContent" class="flex items-center gap-2 overflow-hidden text-xs text-pink-700 font-medium"></div>
+            <button onclick="clearPreview()" class="text-pink-400 hover:text-pink-600 p-1">
                 <i class="fa-solid fa-circle-xmark"></i>
             </button>
         </div>
 
-        <form id="chatForm" class="flex items-end space-x-2">
-            <!-- Hidden File Input -->
-            <input type="file" id="fileInput" class="hidden">
-            
-            <button type="button" id="attachBtn" class="p-3 text-gray-500 dark:text-gray-400 hover:text-rose-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
-                <i class="fa-solid fa-paperclip text-lg"></i>
-            </button>
-
-            <!-- Quick Emoji Picker Toggle -->
+        <!-- Input Area -->
+        <div class="p-3 bg-white border-t-2 border-pink-100 flex items-center gap-2">
+            <!-- Media Upload Button -->
             <div class="relative">
-                <button type="button" id="emojiBtn" class="p-3 text-gray-500 dark:text-gray-400 hover:text-rose-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
-                    <i class="fa-regular fa-face-smile text-lg"></i>
+                <button onclick="toggleMediaMenu()" class="w-10 h-10 rounded-full bg-pink-100 hover:bg-pink-200 text-pink-500 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-paperclip"></i>
                 </button>
-                <!-- Quick Emoji Popup -->
-                <div id="emojiPicker" class="hidden absolute bottom-14 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 grid grid-cols-6 gap-1 w-60 z-20">
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">❤️</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">💖</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">😊</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">😘</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">✨</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">🌹</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">🥺</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">🔥</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">🌸</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">🫂</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">☕</button>
-                    <button type="button" class="emoji-option text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">💌</button>
+                <!-- Media Popover -->
+                <div id="mediaMenu" class="hidden absolute bottom-12 left-0 bg-white border-2 border-pink-200 rounded-2xl shadow-xl p-2 flex gap-2 z-20">
+                    <label class="w-10 h-10 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-500 flex items-center justify-center cursor-pointer transition-all" title="Photo">
+                        <i class="fa-solid fa-image"></i>
+                        <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleFileSelect(event, 'image')">
+                    </label>
+                    <label class="w-10 h-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-500 flex items-center justify-center cursor-pointer transition-all" title="Document">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <input type="file" id="docInput" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="handleFileSelect(event, 'doc')">
+                    </label>
                 </div>
             </div>
 
-            <!-- Message Box -->
-            <div class="flex-1 relative">
-                <textarea id="messageInput" rows="1" placeholder="Type a message..." class="w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-2xl resize-none max-h-32 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm transition-all"></textarea>
-            </div>
+            <!-- Text Input -->
+            <input type="text" id="messageInput" placeholder="Type a message..." class="flex-1 bg-pink-50/60 border-2 border-pink-200 rounded-2xl px-4 py-2 text-sm text-gray-700 focus:outline-none focus:border-pink-400" onkeypress="handleKeyPress(event)">
+
+            <!-- Voice Record Button -->
+            <button id="voiceBtn" onclick="toggleVoiceRecording()" class="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-500 flex items-center justify-center transition-all">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
 
             <!-- Send Button -->
-            <button type="submit" id="sendBtn" class="p-3 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-md shadow-rose-500/30 transition duration-200 flex items-center justify-center">
-                <i class="fa-solid fa-paper-plane text-sm"></i>
+            <button onclick="sendMessage()" class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white flex items-center justify-center shadow-md hover:opacity-90 transition-all transform active:scale-95">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
             </button>
-        </form>
-    </footer>
-
-    <!-- User Selection Modal -->
-    <div id="userModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-rose-50/90 to-white dark:from-gray-800 dark:to-gray-900 rounded-[35px] p-7 w-full max-w-sm text-center shadow-2xl border-2 border-rose-200/60 dark:border-rose-900/40 transform transition-all relative overflow-hidden">
-            
-            <!-- Decorative floating background sparkles/hearts -->
-            <div class="absolute -top-6 -right-6 text-4xl opacity-30 pointer-events-none pookie-float">💖</div>
-            <div class="absolute -bottom-6 -left-6 text-4xl opacity-30 pointer-events-none pookie-float" style="animation-delay: 1.5s;">✨</div>
-
-            <div class="w-20 h-20 bg-gradient-to-tr from-rose-400 to-pink-400 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg pookie-glow pookie-float">
-                🧸
-            </div>
-            <h2 class="text-2xl font-black text-gray-800 dark:text-gray-100 mb-1 flex items-center justify-center gap-1.5">
-                Welcome to AnA Private <span class="text-rose-500 animate-bounce">💌</span>
-            </h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 font-medium">Who is logging into our secret cozy space today?</p>
-            
-            <div class="space-y-3 mb-4">
-                <button onclick="selectUser('Arian')" class="w-full py-3.5 px-4 bg-white dark:bg-gray-800/80 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-gray-200 rounded-2xl font-bold border border-rose-100 dark:border-rose-900/50 shadow-sm flex items-center justify-between group transition duration-200">
-                    <span class="flex items-center gap-3">
-                        <span class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-black shadow-inner">🧸</span>
-                        <span class="text-sm">Arian (Pumpchikin)</span>
-                    </span>
-                    <i class="fa-solid fa-heart text-xs text-rose-400 group-hover:text-white transition-colors"></i>
-                </button>
-                <button onclick="selectUser('Anika')" class="w-full py-3.5 px-4 bg-white dark:bg-gray-800/80 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-gray-200 rounded-2xl font-bold border border-rose-100 dark:border-rose-900/50 shadow-sm flex items-center justify-between group transition duration-200">
-                    <span class="flex items-center gap-3">
-                        <span class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-sm font-black shadow-inner">🐰</span>
-                        <span class="text-sm">Anika (Peanut)</span>
-                    </span>
-                    <i class="fa-solid fa-heart text-xs text-rose-400 group-hover:text-white transition-colors"></i>
-                </button>
-            </div>
-
-            <!-- Custom Name Option -->
-            <div class="pt-3 border-t border-rose-100 dark:border-gray-700/60">
-                <input type="text" id="customNameInput" placeholder="Or type your nickname..." class="w-full px-4 py-2.5 text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-xl border border-rose-200 dark:border-gray-600 focus:border-rose-500 focus:outline-none mb-2.5 font-medium shadow-inner">
-                <button onclick="saveCustomUser()" class="w-full py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold rounded-xl text-xs transition shadow-sm">✨ Enter Our Space</button>
-            </div>
         </div>
     </div>
 
-    <!-- Wallpaper Theme Selection Modal -->
-    <div id="wallpaperModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl border border-gray-100 dark:border-gray-700">
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Choose Background Wallpaper</h2>
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <button onclick="setThemeBackground('dots')" class="p-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-900 text-xs font-medium hover:border-rose-500">
-                    <div class="w-full h-12 bg-pattern-dots rounded-lg mb-2"></div>
-                    Minimal Dots
-                </button>
-                <button onclick="setThemeBackground('warm')" class="p-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-900 text-xs font-medium hover:border-rose-500">
-                    <div class="w-full h-12 bg-pattern-warm rounded-lg mb-2"></div>
-                    Warm Glow
-                </button>
-                <button onclick="setThemeBackground('pastel')" class="p-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-900 text-xs font-medium hover:border-rose-500">
-                    <div class="w-full h-12 bg-pattern-pastel rounded-lg mb-2"></div>
-                    Soft Pastel
-                </button>
-                <button onclick="setThemeBackground('plain')" class="p-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-900 text-xs font-medium hover:border-rose-500">
-                    <div class="w-full h-12 bg-gray-200 dark:bg-gray-800 rounded-lg mb-2"></div>
-                    Clean Solid
-                </button>
-            </div>
-            <button onclick="closeModal('wallpaperModal')" class="w-full py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-xs">Done</button>
-        </div>
+    <!-- Full Image Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <img id="modalImg" class="max-w-full max-h-full rounded-2xl shadow-2xl">
     </div>
 
-    <!-- Image Lightbox Modal -->
-    <div id="lightboxModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-        <button onclick="closeModal('lightboxModal')" class="absolute top-4 right-4 text-white text-2xl p-2 hover:opacity-75">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-        <img id="lightboxImg" src="" class="max-w-full max-h-[85vh] rounded-xl object-contain">
-    </div>
+    <script>
+        let pubnub = null;
+        let selectedPersona = null;
+        let roomCode = 'ana2026';
+        let pendingAttachment = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
 
-    <!-- Setup Guide Modal -->
-    <div id="setupModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[85vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-rose-500"></i> Firebase & Rules Setup
-                </h2>
-                <button onclick="closeModal('setupModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <div class="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs space-y-2">
-                <p class="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
-                    <i class="fa-solid fa-key"></i> How to fix "Missing or insufficient permissions":
-                </p>
-                <ol class="list-decimal pl-4 space-y-1 text-gray-700 dark:text-gray-300 text-[11px]">
-                    <li>Open <a href="https://console.firebase.google.com" target="_blank" class="text-rose-500 underline font-semibold">Firebase Console</a> and select your project.</li>
-                    <li>Go to <b>Firestore Database</b> &rarr; <b>Rules</b> tab.</li>
-                    <li>Replace the existing rules with this code:</li>
-                </ol>
-                <div class="relative bg-gray-900 text-rose-300 p-2.5 rounded-xl font-mono text-[10px] overflow-x-auto">
-                    <pre id="rulesCodeSnippet">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}</pre>
-                    <button onclick="copyRulesCode()" class="absolute top-2 right-2 px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[9px] rounded font-sans transition">Copy Rules</button>
-                </div>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400">Click <b>Publish</b> in Firebase Rules tab, and messages will sync live instantly across your devices!</p>
-            </div>
+        // Initialize PubNub Keys
+        const pubkey = 'sub-c-5f8f30be-6ee1-11e9-a359-2a2d480c54a8'; // Demo Key
+        const subkey = 'sub-c-5f8f30be-6ee1-11e9-a359-2a2d480c54a8'; 
 
-            <div class="text-xs text-gray-600 dark:text-gray-300 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                <p class="font-semibold text-gray-800 dark:text-gray-200">Firebase Configuration Keys:</p>
-                <div class="space-y-2">
-                    <input type="text" id="cfgApiKey" placeholder="apiKey" class="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-rose-500">
-                    <input type="text" id="cfgAuthDomain" placeholder="authDomain" class="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-rose-500">
-                    <input type="text" id="cfgProjectId" placeholder="projectId" class="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-rose-500">
-                    <input type="text" id="cfgAppId" placeholder="appId" class="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-rose-500">
-                </div>
-                <button onclick="saveFirebaseConfig()" class="w-full py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl text-xs transition shadow-md shadow-rose-500/20">Save Keys & Reconnect</button>
-            </div>
-        </div>
-    </div>
+        function selectPersona(persona) {
+            selectedPersona = persona;
+            const btnPump = document.getElementById('btnPumpchikin');
+            const btnPea = document.getElementById('btnPeanut');
 
-    <!-- App Main Script Module -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        let db = null;
-        let messagesCollection = null;
-        let localMessages = [];
-        let selectedFile = null;
-        let currentUser = localStorage.getItem('chat_username') || 'Arian';
-
-        const chatContainer = document.getElementById('chatContainer');
-        const chatForm = document.getElementById('chatForm');
-        const messageInput = document.getElementById('messageInput');
-        const fileInput = document.getElementById('fileInput');
-        const attachBtn = document.getElementById('attachBtn');
-        const attachmentPreview = document.getElementById('attachmentPreview');
-        const fileNameDisplay = document.getElementById('fileName');
-        const fileSizeDisplay = document.getElementById('fileSize');
-        const cancelAttachment = document.getElementById('cancelAttachment');
-        const emojiBtn = document.getElementById('emojiBtn');
-        const emojiPicker = document.getElementById('emojiPicker');
-        const currentUserLabel = document.getElementById('currentUserLabel');
-        const userModal = document.getElementById('userModal');
-
-        // Initialize Firebase
-        function initFirebase() {
-            try {
-                const storedConfig = localStorage.getItem('firebase_config');
-                if (storedConfig) {
-                    const firebaseConfig = JSON.parse(storedConfig);
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'ana-private-app';
-                    messagesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-                    subscribeToMessages();
-                } else {
-                    loadFallbackMessages();
-                }
-            } catch (e) {
-                console.warn("Firebase initialization failed, operating in offline/fallback mode.", e);
-                loadFallbackMessages();
-            }
-        }
-
-        // Subscribe to Firestore updates
-        function subscribeToMessages() {
-            if (!messagesCollection) return;
-
-            onSnapshot(query(messagesCollection), (snapshot) => {
-                const msgs = [];
-                snapshot.forEach(doc => {
-                    msgs.push({ id: doc.id, ...doc.data() });
-                });
-                msgs.sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
-                    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
-                    return timeA - timeB;
-                });
-                
-                document.getElementById('permissionWarningBanner')?.classList.add('hidden');
-                document.getElementById('firestoreStatusBadge')?.classList.replace('bg-amber-500', 'bg-emerald-500');
-                
-                localMessages = msgs;
-                localStorage.setItem('local_messages', JSON.stringify(msgs));
-                renderMessages(msgs);
-            }, (error) => {
-                console.warn("Firestore access restricted by rules:", error.message);
-                document.getElementById('permissionWarningBanner')?.classList.remove('hidden');
-                document.getElementById('firestoreStatusBadge')?.classList.replace('bg-emerald-500', 'bg-amber-500');
-                loadFallbackMessages();
-            });
-        }
-
-        function loadFallbackMessages() {
-            const stored = localStorage.getItem('local_messages');
-            if (stored) {
-                try {
-                    localMessages = JSON.parse(stored);
-                } catch (e) {
-                    localMessages = [];
-                }
+            if (persona === 'pumpchikin') {
+                btnPump.classList.add('bg-pink-100', 'border-pink-400', 'text-pink-600');
+                btnPea.classList.remove('bg-pink-100', 'border-pink-400', 'text-pink-600');
             } else {
-                localMessages = [
-                    {
-                        sender: 'System',
-                        text: 'Welcome to AnA Private! Send a message to start chatting.',
-                        createdAt: new Date().toISOString(),
-                        type: 'text'
-                    }
-                ];
+                btnPea.classList.add('bg-pink-100', 'border-pink-400', 'text-pink-600');
+                btnPump.classList.remove('bg-pink-100', 'border-pink-400', 'text-pink-600');
             }
-            renderMessages(localMessages);
         }
 
-        window.copyRulesCode = function() {
-            const code = document.getElementById('rulesCodeSnippet').innerText;
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = code;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-            alert('Firestore rules copied to clipboard!');
-        };
-
-        function renderMessages(msgs) {
-            chatContainer.innerHTML = '';
-            
-            if (msgs.length === 0) {
-                chatContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full text-gray-400 text-xs">
-                        <i class="fa-regular fa-comments text-2xl mb-1"></i>
-                        <p>No messages yet. Say hello!</p>
-                    </div>`;
+        function connectRoom() {
+            const inputCode = document.getElementById('roomCodeInput').value.trim();
+            if (!selectedPersona) {
+                alert('Please select who you are 💕');
+                return;
+            }
+            if (!inputCode) {
+                alert('Please enter secret code!');
                 return;
             }
 
-            let lastSender = '';
+            roomCode = inputCode;
+            document.getElementById('connectionPanel').classList.add('hidden');
+            document.getElementById('statusText').innerText = `Connected as ${selectedPersona === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜'}`;
 
-            msgs.forEach((msg) => {
-                const isMe = msg.sender === currentUser;
-                const msgWrapper = document.createElement('div');
-                msgWrapper.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-3`;
-
-                const timeStr = msg.createdAt ? formatTime(msg.createdAt) : 'Just now';
-
-                let contentHtml = '';
-
-                if (msg.fileData) {
-                    if (msg.fileData.type.startsWith('image/')) {
-                        contentHtml = `
-                            <div class="rounded-2xl overflow-hidden cursor-pointer hover:opacity-95 transition my-1 border border-black/5" onclick="openLightbox('${msg.fileData.url}')">
-                                <img src="${msg.fileData.url}" alt="Shared Image" class="max-w-[240px] max-h-[300px] object-cover">
-                            </div>
-                            ${msg.text ? `<p class="mt-1">${escapeHtml(msg.text)}</p>` : ''}`;
-                    } else {
-                        contentHtml = `
-                            <a href="${msg.fileData.url}" download="${msg.fileData.name}" class="flex items-center space-x-3 p-2 bg-black/5 dark:bg-white/10 rounded-xl mb-1 hover:bg-black/10 transition">
-                                <i class="fa-solid fa-file-arrow-down text-lg"></i>
-                                <div class="truncate max-w-[160px]">
-                                    <p class="font-semibold text-xs truncate">${escapeHtml(msg.fileData.name)}</p>
-                                    <p class="text-[10px] opacity-70">${msg.fileData.size}</p>
-                                </div>
-                            </a>
-                            ${msg.text ? `<p class="mt-1">${escapeHtml(msg.text)}</p>` : ''}`;
-                    }
-                } else {
-                    contentHtml = `<p class="leading-relaxed text-sm">${escapeHtml(msg.text)}</p>`;
-                }
-
-                msgWrapper.innerHTML = `
-                    ${!isMe && lastSender !== msg.sender ? `<span class="text-[10px] font-medium text-gray-400 mb-1 ml-1">${escapeHtml(msg.sender)}</span>` : ''}
-                    <div class="max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                        isMe 
-                        ? 'bg-rose-500 text-white rounded-br-none' 
-                        : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-none border border-gray-100 dark:border-gray-700'
-                    }">
-                        ${contentHtml}
-                        <div class="text-[9px] mt-1 text-right opacity-70 flex items-center justify-end gap-1">
-                            <span>${timeStr}</span>
-                            ${isMe ? '<i class="fa-solid fa-check text-[8px]"></i>' : ''}
-                        </div>
-                    </div>
-                `;
-                chatContainer.appendChild(msgWrapper);
-                lastSender = msg.sender;
+            // Initialize PubNub
+            pubnub = new PubNub({
+                publishKey: 'demo',
+                subscribeKey: 'demo',
+                userId: selectedPersona + '_' + Math.random().toString(36).substring(2, 7)
             });
 
+            pubnub.subscribe({ channels: ['ana_room_' + roomCode] });
+
+            pubnub.addListener({
+                message: function(event) {
+                    renderMessage(event.message);
+                }
+            });
+
+            spawnHearts();
+        }
+
+        function toggleSettings() {
+            document.getElementById('connectionPanel').classList.toggle('hidden');
+        }
+
+        function toggleMediaMenu() {
+            document.getElementById('mediaMenu').classList.toggle('hidden');
+        }
+
+        function handleFileSelect(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                pendingAttachment = {
+                    type: type,
+                    data: e.target.result,
+                    name: file.name
+                };
+                showPreview(type, file.name);
+            };
+            reader.readAsDataURL(file);
+            document.getElementById('mediaMenu').classList.add('hidden');
+        }
+
+        function showPreview(type, name) {
+            const container = document.getElementById('previewContainer');
+            const content = document.getElementById('previewContent');
+            container.classList.remove('hidden');
+            content.innerHTML = `<i class="fa-solid ${type === 'image' ? 'fa-image' : 'fa-file'} text-pink-500"></i> <span class="truncate max-w-[200px]">${name}</span>`;
+        }
+
+        function clearPreview() {
+            pendingAttachment = null;
+            document.getElementById('previewContainer').classList.add('hidden');
+        }
+
+        async function toggleVoiceRecording() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            pendingAttachment = {
+                                type: 'voice',
+                                data: reader.result,
+                                name: 'Voice Note 🎙️'
+                            };
+                            sendMessage();
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    voiceBtn.classList.add('bg-red-500', 'text-white', 'animate-pulse');
+                } catch (err) {
+                    alert('Microphone access denied or not supported.');
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                voiceBtn.classList.remove('bg-red-500', 'text-white', 'animate-pulse');
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (!text && !pendingAttachment) return;
+
+            const msgData = {
+                sender: selectedPersona,
+                text: text,
+                attachment: pendingAttachment,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            pubnub.publish({
+                channel: 'ana_room_' + roomCode,
+                message: msgData
+            });
+
+            input.value = '';
+            clearPreview();
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function renderMessage(msg) {
+            const chatContainer = document.getElementById('chatMessages');
+            const isMe = msg.sender === selectedPersona;
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} my-1`;
+
+            let senderTag = msg.sender === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜';
+            let bgBubble = isMe 
+                ? 'bg-gradient-to-r from-pink-300 to-rose-300 text-gray-800 rounded-2xl rounded-tr-none shadow-sm'
+                : 'bg-white border-2 border-pink-100 text-gray-800 rounded-2xl rounded-tl-none shadow-sm';
+
+            let mediaHTML = '';
+            if (msg.attachment) {
+                if (msg.attachment.type === 'image') {
+                    mediaHTML = `<img src="${msg.attachment.data}" class="max-w-[200px] rounded-xl my-1 border border-pink-200 cursor-pointer" onclick="openImageModal('${msg.attachment.data}')">`;
+                } else if (msg.attachment.type === 'doc') {
+                    mediaHTML = `<a href="${msg.attachment.data}" download="${msg.attachment.name}" class="flex items-center gap-2 p-2 bg-pink-50 rounded-xl my-1 text-xs text-pink-600 font-bold border border-pink-200"><i class="fa-solid fa-file-arrow-down text-lg"></i> ${msg.attachment.name}</a>`;
+                } else if (msg.attachment.type === 'voice') {
+                    mediaHTML = `<audio controls src="${msg.attachment.data}" class="my-1 max-w-[220px] h-8"></audio>`;
+                }
+            }
+
+            msgDiv.innerHTML = `
+                <span class="text-[10px] text-pink-400 font-bold mb-0.5 px-1">${senderTag}</span>
+                <div class="${bgBubble} p-3 max-w-[80%] break-words text-sm">
+                    ${mediaHTML}
+                    ${msg.text ? `<p>\${msg.text}</p>` : ''}
+                </div>
+                <span class="text-[9px] text-gray-400 mt-0.5 px-1">${msg.time}</span>
+            `;
+
+            chatContainer.appendChild(msgDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // Send Message
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = messageInput.value.trim();
-            if (!text && !selectedFile) return;
-
-            const newMsg = {
-                sender: currentUser || 'Anonymous',
-                text: text,
-                createdAt: new Date().toISOString(),
-            };
-
-            if (selectedFile) {
-                newMsg.fileData = {
-                    name: selectedFile.name,
-                    size: formatBytes(selectedFile.size),
-                    type: selectedFile.type,
-                    url: selectedFile.url
-                };
-            }
-
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            clearAttachment();
-
-            let firestoreSuccess = false;
-            if (db && messagesCollection) {
-                try {
-                    const firestoreDoc = {
-                        ...newMsg,
-                        createdAt: serverTimestamp()
-                    };
-                    await addDoc(messagesCollection, firestoreDoc);
-                    firestoreSuccess = true;
-                } catch (err) {
-                    console.warn("Firestore write blocked by rules. Saving locally.", err);
-                    document.getElementById('permissionWarningBanner')?.classList.remove('hidden');
-                }
-            }
-            
-            if (!firestoreSuccess) {
-                saveToLocalFallback(newMsg);
-            }
-        });
-
-        function saveToLocalFallback(msg) {
-            msg.createdAt = msg.createdAt || new Date().toISOString();
-            localMessages.push(msg);
-            localStorage.setItem('local_messages', JSON.stringify(localMessages));
-            renderMessages(localMessages);
+        function openImageModal(src) {
+            document.getElementById('modalImg').src = src;
+            document.getElementById('imageModal').classList.remove('hidden');
         }
 
-        // File Handler
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (file.size > 5 * 1024 * 1024) {
-                alert('File size exceeds 5MB limit.');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                selectedFile = {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    url: event.target.result
-                };
-                
-                fileNameDisplay.textContent = file.name;
-                fileSizeDisplay.textContent = formatBytes(file.size);
-                attachmentPreview.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
-
-        attachBtn.addEventListener('click', () => fileInput.click());
-        cancelAttachment.addEventListener('click', clearAttachment);
-
-        function clearAttachment() {
-            selectedFile = null;
-            fileInput.value = '';
-            attachmentPreview.classList.add('hidden');
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
         }
 
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
-
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                chatForm.dispatchEvent(new Event('submit'));
-            }
-        });
-
-        emojiBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            emojiPicker.classList.toggle('hidden');
-        });
-
-        document.querySelectorAll('.emoji-option').forEach(btn => {
-            btn.addEventListener('click', () => {
-                messageInput.value += btn.textContent;
-                emojiPicker.classList.add('hidden');
-                messageInput.focus();
-            });
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-                emojiPicker.classList.add('hidden');
-            }
-        });
-
-        // Search Filter
-        const searchBtn = document.getElementById('searchBtn');
-        const searchBar = document.getElementById('searchBar');
-        const searchInput = document.getElementById('searchInput');
-        const closeSearchBtn = document.getElementById('closeSearchBtn');
-
-        searchBtn.addEventListener('click', () => {
-            searchBar.classList.remove('hidden');
-            searchInput.focus();
-        });
-
-        closeSearchBtn.addEventListener('click', () => {
-            searchBar.classList.add('hidden');
-            searchInput.value = '';
-            renderMessages(localMessages);
-        });
-
-        searchInput.addEventListener('input', (e) => {
-            const queryStr = e.target.value.toLowerCase();
-            const filtered = localMessages.filter(m => m.text && m.text.toLowerCase().includes(queryStr));
-            renderMessages(filtered);
-        });
-
-        window.selectUser = function(name) {
-            currentUser = name;
-            localStorage.setItem('chat_username', name);
-            currentUserLabel.textContent = `User: ${name}`;
-            userModal.classList.add('hidden');
-            if (localMessages.length > 0) renderMessages(localMessages);
-        };
-
-        window.saveCustomUser = function() {
-            const customInput = document.getElementById('customNameInput');
-            if (customInput.value.trim()) {
-                selectUser(customInput.value.trim());
-            }
-        };
-
-        document.getElementById('switchUserBtn').addEventListener('click', () => {
-            userModal.classList.remove('hidden');
-        });
-
-        function initTheme() {
-            const isDark = localStorage.getItem('theme') === 'dark' || 
-                (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+        function spawnHearts() {
+            const container = document.getElementById('heartContainer');
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart text-pink-300 text-sm';
+                heart.innerText = ['💖', '🌸', '✨', '💕'][Math.floor(Math.random() * 4)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                container.appendChild(heart);
+                setTimeout(() => heart.remove(), 5000);
+            }, 1000);
         }
-
-        document.getElementById('themeToggleBtn').addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        });
-
-        document.getElementById('wallpaperBtn').addEventListener('click', () => {
-            document.getElementById('wallpaperModal').classList.remove('hidden');
-        });
-
-        window.setThemeBackground = function(style) {
-            chatContainer.className = "flex-1 overflow-y-auto p-4 space-y-4 relative transition-all ";
-            if (style === 'dots') chatContainer.classList.add('bg-pattern-dots');
-            else if (style === 'warm') chatContainer.classList.add('bg-pattern-warm');
-            else if (style === 'pastel') chatContainer.classList.add('bg-pattern-pastel');
-            else chatContainer.classList.add('bg-gray-100', 'dark:bg-gray-900');
-            
-            localStorage.setItem('chat_wallpaper', style);
-        };
-
-        window.openLightbox = function(url) {
-            document.getElementById('lightboxImg').src = url;
-            document.getElementById('lightboxModal').classList.remove('hidden');
-        };
-
-        window.closeModal = function(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        };
-
-        document.getElementById('setupGuideBtn').addEventListener('click', () => {
-            document.getElementById('setupModal').classList.remove('hidden');
-        });
-
-        window.saveFirebaseConfig = function() {
-            const apiKey = document.getElementById('cfgApiKey').value.trim();
-            const authDomain = document.getElementById('cfgAuthDomain').value.trim();
-            const projectId = document.getElementById('cfgProjectId').value.trim();
-            const appId = document.getElementById('cfgAppId').value.trim();
-
-            if (apiKey && projectId) {
-                const cfg = { apiKey, authDomain, projectId, appId };
-                localStorage.setItem('firebase_config', JSON.stringify(cfg));
-                alert('Firebase settings saved! Reloading application...');
-                window.location.reload();
-            } else {
-                alert('Please enter at least an ApiKey and ProjectID');
-            }
-        };
-
-        function formatBytes(bytes, decimals = 1) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-
-        function formatTime(timestamp) {
-            let date = new Date();
-            if (timestamp && typeof timestamp.toDate === 'function') {
-                date = timestamp.toDate();
-            } else if (typeof timestamp === 'string') {
-                date = new Date(timestamp);
-            }
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        // Initialize application on startup
-        initTheme();
-        initFirebase();
     </script>
 </body>
 </html>
