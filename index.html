@@ -216,7 +216,7 @@
 
             roomCode = inputCode;
             document.getElementById('connectionPanel').classList.add('hidden');
-            document.getElementById('statusText').innerText = `Connected as ${selectedPersona === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜'}`;
+            document.getElementById('statusText').innerText = 'Connected as ' + (selectedPersona === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜');
 
             // Initialize PubNub
             pubnub = new PubNub({
@@ -265,7 +265,7 @@
             const container = document.getElementById('previewContainer');
             const content = document.getElementById('previewContent');
             container.classList.remove('hidden');
-            content.innerHTML = `<i class="fa-solid ${type === 'image' ? 'fa-image' : 'fa-file'} text-pink-500"></i> <span class="truncate max-w-[200px]">${name}</span>`;
+            content.innerHTML = '<i class="fa-solid ' + (type === 'image' ? 'fa-image' : 'fa-file') + ' text-pink-500"></i> <span class="truncate max-w-[200px]">' + name + '</span>';
         }
 
         function clearPreview() {
@@ -341,7 +341,7 @@
             const isMe = msg.sender === selectedPersona;
 
             const msgDiv = document.createElement('div');
-            msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} my-1`;
+            msgDiv.className = 'flex flex-col ' + (isMe ? 'items-end' : 'items-start') + ' my-1';
 
             let senderTag = msg.sender === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜';
             let bgBubble = isMe 
@@ -351,22 +351,23 @@
             let mediaHTML = '';
             if (msg.attachment) {
                 if (msg.attachment.type === 'image') {
-                    mediaHTML = `<img src="${msg.attachment.data}" class="max-w-[200px] rounded-xl my-1 border border-pink-200 cursor-pointer" onclick="openImageModal('${msg.attachment.data}')">`;
+                    mediaHTML = '<img src="' + msg.attachment.data + '" class="max-w-[200px] rounded-xl my-1 border border-pink-200 cursor-pointer" onclick="openImageModal(\'' + msg.attachment.data + '\')">';
                 } else if (msg.attachment.type === 'doc') {
-                    mediaHTML = `<a href="${msg.attachment.data}" download="${msg.attachment.name}" class="flex items-center gap-2 p-2 bg-pink-50 rounded-xl my-1 text-xs text-pink-600 font-bold border border-pink-200"><i class="fa-solid fa-file-arrow-down text-lg"></i> ${msg.attachment.name}</a>`;
+                    mediaHTML = '<a href="' + msg.attachment.data + '" download="' + msg.attachment.name + '" class="flex items-center gap-2 p-2 bg-pink-50 rounded-xl my-1 text-xs text-pink-600 font-bold border border-pink-200"><i class="fa-solid fa-file-arrow-down text-lg"></i> ' + msg.attachment.name + '</a>';
                 } else if (msg.attachment.type === 'voice') {
-                    mediaHTML = `<audio controls src="${msg.attachment.data}" class="my-1 max-w-[220px] h-8"></audio>`;
+                    mediaHTML = '<audio controls src="' + msg.attachment.data + '" class="my-1 max-w-[220px] h-8"></audio>';
                 }
             }
 
-            msgDiv.innerHTML = `
-                <span class="text-[10px] text-pink-400 font-bold mb-0.5 px-1">${senderTag}</span>
-                <div class="${bgBubble} p-3 max-w-[80%] break-words text-sm">
-                    ${mediaHTML}
-                    ${msg.text ? `<p>\${msg.text}</p>` : ''}
-                </div>
-                <span class="text-[9px] text-gray-400 mt-0.5 px-1">${msg.time}</span>
-            `;
+            let textContent = msg.text ? '<p>' + msg.text + '</p>' : '';
+
+            msgDiv.innerHTML = 
+                '<span class="text-[10px] text-pink-400 font-bold mb-0.5 px-1">' + senderTag + '</span>' +
+                '<div class="' + bgBubble + ' p-3 max-w-[80%] break-words text-sm">' +
+                    mediaHTML +
+                    textContent +
+                '</div>' +
+                '<span class="text-[9px] text-gray-400 mt-0.5 px-1">' + msg.time + '</span>';
 
             chatContainer.appendChild(msgDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
