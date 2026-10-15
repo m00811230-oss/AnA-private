@@ -181,18 +181,18 @@
     </div>
 
     <script>
-        let pubnub = null;
-        let selectedPersona = null;
-        let roomCode = 'ana2026';
-        let pendingAttachment = null;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let isRecording = false;
+        var pubnub = null;
+        var selectedPersona = null;
+        var roomCode = 'ana2026';
+        var pendingAttachment = null;
+        var mediaRecorder = null;
+        var audioChunks = [];
+        var isRecording = false;
 
         function selectPersona(persona) {
             selectedPersona = persona;
-            const btnPump = document.getElementById('btnPumpchikin');
-            const btnPea = document.getElementById('btnPeanut');
+            var btnPump = document.getElementById('btnPumpchikin');
+            var btnPea = document.getElementById('btnPeanut');
 
             if (persona === 'pumpchikin') {
                 btnPump.classList.add('bg-pink-100', 'border-pink-400', 'text-pink-600');
@@ -204,7 +204,7 @@
         }
 
         function connectRoom() {
-            const inputCode = document.getElementById('roomCodeInput').value.trim();
+            var inputCode = document.getElementById('roomCodeInput').value.trim();
             if (!selectedPersona) {
                 alert('Please select who you are 💕');
                 return;
@@ -245,10 +245,10 @@
         }
 
         function handleFileSelect(event, type) {
-            const file = event.target.files[0];
+            var file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
+            var reader = new FileReader();
             reader.onload = function(e) {
                 pendingAttachment = {
                     type: type,
@@ -262,8 +262,8 @@
         }
 
         function showPreview(type, name) {
-            const container = document.getElementById('previewContainer');
-            const content = document.getElementById('previewContent');
+            var container = document.getElementById('previewContainer');
+            var content = document.getElementById('previewContent');
             container.classList.remove('hidden');
             content.innerHTML = '<i class="fa-solid ' + (type === 'image' ? 'fa-image' : 'fa-file') + ' text-pink-500"></i> <span class="truncate max-w-[200px]">' + name + '</span>';
         }
@@ -274,19 +274,19 @@
         }
 
         async function toggleVoiceRecording() {
-            const voiceBtn = document.getElementById('voiceBtn');
+            var voiceBtn = document.getElementById('voiceBtn');
             
             if (!isRecording) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     audioChunks = [];
 
-                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
+                    mediaRecorder.ondataavailable = function(event) { audioChunks.push(event.data); };
+                    mediaRecorder.onstop = function() {
+                        var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        var reader = new FileReader();
+                        reader.onloadend = function() {
                             pendingAttachment = {
                                 type: 'voice',
                                 data: reader.result,
@@ -311,12 +311,12 @@
         }
 
         function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
+            var input = document.getElementById('messageInput');
+            var text = input.value.trim();
 
             if (!text && !pendingAttachment) return;
 
-            const msgData = {
+            var msgData = {
                 sender: selectedPersona,
                 text: text,
                 attachment: pendingAttachment,
@@ -337,18 +337,18 @@
         }
 
         function renderMessage(msg) {
-            const chatContainer = document.getElementById('chatMessages');
-            const isMe = msg.sender === selectedPersona;
+            var chatContainer = document.getElementById('chatMessages');
+            var isMe = msg.sender === selectedPersona;
 
-            const msgDiv = document.createElement('div');
+            var msgDiv = document.createElement('div');
             msgDiv.className = 'flex flex-col ' + (isMe ? 'items-end' : 'items-start') + ' my-1';
 
-            let senderTag = msg.sender === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜';
-            let bgBubble = isMe 
+            var senderTag = msg.sender === 'pumpchikin' ? 'pumpchikin 🎃' : 'peanut 🥜';
+            var bgBubble = isMe 
                 ? 'bg-gradient-to-r from-pink-300 to-rose-300 text-gray-800 rounded-2xl rounded-tr-none shadow-sm'
                 : 'bg-white border-2 border-pink-100 text-gray-800 rounded-2xl rounded-tl-none shadow-sm';
 
-            let mediaHTML = '';
+            var mediaHTML = '';
             if (msg.attachment) {
                 if (msg.attachment.type === 'image') {
                     mediaHTML = '<img src="' + msg.attachment.data + '" class="max-w-[200px] rounded-xl my-1 border border-pink-200 cursor-pointer" onclick="openImageModal(\'' + msg.attachment.data + '\')">';
@@ -359,7 +359,10 @@
                 }
             }
 
-            let textContent = msg.text ? '<p>' + msg.text + '</p>' : '';
+            var textContent = '';
+            if (msg.text) {
+                textContent = '<p>' + msg.text + '</p>';
+            }
 
             msgDiv.innerHTML = 
                 '<span class="text-[10px] text-pink-400 font-bold mb-0.5 px-1">' + senderTag + '</span>' +
@@ -383,15 +386,15 @@
         }
 
         function spawnHearts() {
-            const container = document.getElementById('heartContainer');
-            setInterval(() => {
-                const heart = document.createElement('div');
+            var container = document.getElementById('heartContainer');
+            setInterval(function() {
+                var heart = document.createElement('div');
                 heart.className = 'floating-heart text-pink-300 text-sm';
                 heart.innerText = ['💖', '🌸', '✨', '💕'][Math.floor(Math.random() * 4)];
                 heart.style.left = Math.random() * 100 + '%';
                 heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
                 container.appendChild(heart);
-                setTimeout(() => heart.remove(), 5000);
+                setTimeout(function() { heart.remove(); }, 5000);
             }, 1000);
         }
     </script>
